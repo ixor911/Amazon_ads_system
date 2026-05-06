@@ -1,0 +1,240 @@
+{
+  "name": "MarketingOptimizationAgent",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this Amazon Ads decision context and return structured recommendations.\n\nThe decision context is provided below as JSON blocks. Treat these blocks as the complete available context.\n\nREQUEST:\n{{ JSON.stringify($json.request, null, 2) }}\n\nPOLICY:\n{{ JSON.stringify($json.policy, null, 2) }}\n\nENTITY:\n{{ JSON.stringify($json.entity, null, 2) }}\n\nSUMMARY:\n{{ JSON.stringify($json.summary, null, 2) }}\n\nYour task:\n1. Read REQUEST.mode to understand the analysis mode.\n2. Read REQUEST.objective to understand what the user wants to optimize.\n3. Read POLICY.business_actions and choose actions ONLY from that list.\n4. Read POLICY.guardrails and respect all limits.\n5. Read ENTITY to understand the object being analyzed.\n6. Read SUMMARY to evaluate performance.\n\nPerformance interpretation:\n- Use SUMMARY.roas, SUMMARY.acos, SUMMARY.ctr, SUMMARY.cvr, SUMMARY.cpc, SUMMARY.sum_spend, SUMMARY.sum_sales, SUMMARY.sum_orders, and SUMMARY.sum_clicks.\n- If these fields are present in SUMMARY, do not say that performance data is missing.\n- If ROAS is low and ACoS is high, recommend conservative efficiency actions.\n- If CTR is low, consider keyword/product relevance issues.\n- If CVR is low, consider conversion or product-page issues.\n\nAction rules:\n- Use exact action names from POLICY.business_actions.\n- Do not invent actions.\n- For increase_bid, decrease_bid, increase_budget, or decrease_budget, change_pct must be a number.\n- For bid changes, change_pct must be <= POLICY.guardrails.max_bid_change_pct.\n- For budget changes, change_pct must be <= POLICY.guardrails.max_budget_change_pct.\n- Use conservative changes, usually 5–20%.\n- If no safe action is justified, use keep_current_settings.\n- If deeper analysis is needed and analyze_products or analyze_keywords is available, you may recommend it.\n\nAutomation rules:\n- If REQUEST.automation_level is recommendation_only, recommendations are not executed.\n- Set requires_human_approval according to POLICY.guardrails.human_approval_required.\n- Do not imply that any action has already been applied.\n\nDetail level:\n- If REQUEST.detail_level is detailed, include clear reasoning using the provided metrics.\n- If REQUEST.detail_level is basic, keep reasoning shorter.\n\nReturn only valid JSON according to the response schema.\nReturn only valid JSON according to the response schema.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a Marketing Optimization Agent for Amazon Ads.\n\nYour task is to analyze the provided decision_context and return structured recommendations.\n\nThe decision_context contains:\n- request: user intent, selected mode, filters, objective, detail level, and automation level\n- policy: allowed business actions and guardrails\n- entity: the campaign/product/keyword being analyzed\n- summary: aggregated performance metrics\n\nImportant rules:\n1. Use ONLY the data provided in decision_context.\n2. Do NOT invent missing data.\n3. Do NOT claim that metrics are missing if they are present in summary.\n4. The summary fields are the source of truth for performance analysis.\n5. You must ONLY use actions from policy.business_actions.\n6. Do NOT create new action names.\n7. If a suitable action does not exist, choose the closest available action from policy.business_actions.\n8. For bid or budget actions, change_pct is REQUIRED and must be a number.\n9. For bid or budget actions, change_pct must respect policy.guardrails.\n10. If change_pct is not relevant for an action, return null.\n11. Do NOT execute live changes.\n12. If request.automation_level is recommendation_only, provide recommendations only.\n13. Every recommended action must include a clear reason.\n14. If data is genuinely insufficient, explain exactly which required field is missing.\n15. Keep recommendations practical, conservative, and business-oriented.\n\nDecision guidance:\n- Low ROAS and high ACoS indicate inefficient spend.\n- High spend with weak conversion suggests reducing bids or budget.\n- Good ROAS with low spend may justify careful scaling.\n- Low CTR suggests weak relevance, broad targeting, or weak ad/product relevance.\n- High CTR but low CVR suggests product page, pricing, reviews, offer, or conversion issue.\n- Campaign-level issues may require bid changes, budget changes, campaign pause, or deeper product/keyword analysis.\n- Product-level issues may require bid changes, product pause/removal, or product page review if that action is available.\n- Keyword-level issues may require bid changes, keyword pause/removal, or negative keyword actions.\n\nAction mapping:\n- If you want to reduce budget, use decrease_budget.\n- If you want to increase budget, use increase_budget.\n- If you want to reduce bid, use decrease_bid.\n- If you want to increase bid, use increase_bid.\n- If you want to review targeting or search terms, use analyze_keywords if available.\n- If you want to review product-level problems, use analyze_products or recommend_product_page_review if available.\n- If no change is needed, use keep_current_settings.\n\nOutput rules:\n- Return only valid JSON.\n- Follow the response schema exactly.\n- Do not include markdown.\n- Do not include explanations outside the JSON.\n- Use confidence as a number between 0 and 1.\n- Use risk_level as one of: low, medium, high.\n- Use priority as one of: low, medium, high."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1f8f9648-7658-49d2-bc02-16e7faea7318",
+      "name": "Marketing Agent",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        224
+      ],
+      "id": "52e9c382-11f2-4ccb-b24f-1116d0e4edba",
+      "name": "gpt-5-mini",
+      "notesInFlow": true,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"agent_type\": \"marketing_optimization_agent\",\n  \"diagnosis\": \"Campaign has high spend but weak efficiency. ROAS is low and ACoS is high, so scaling is not recommended.\",\n  \"recommended_actions\": [\n    {\n      \"action\": \"decrease_budget\",\n      \"target\": \"CAMP_A\",\n      \"change_pct\": 15,\n      \"priority\": \"high\",\n      \"confidence\": 0.82,\n      \"risk_level\": \"medium\",\n      \"requires_human_approval\": true,\n      \"reason\": \"ROAS is 0.70 and ACoS is 1.43, meaning the campaign spends more than it generates in sales.\"\n    },\n    {\n      \"action\": \"analyze_keywords\",\n      \"target\": \"CAMP_A\",\n      \"change_pct\": null,\n      \"priority\": \"medium\",\n      \"confidence\": 0.76,\n      \"risk_level\": \"low\",\n      \"requires_human_approval\": false,\n      \"reason\": \"The campaign includes broad keywords, so keyword-level analysis may reveal wasted spend.\"\n    }\n  ],\n  \"summary_for_user\": \"Do not scale this campaign yet. Reduce spend carefully and review keyword performance before making larger changes.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        224
+      ],
+      "id": "d43759c6-b66a-4c9d-9dd0-7c456fccb252",
+      "name": "Output Parser"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"request\": {\n    \"mode\": \"campaign\",\n    \"conditions\": {\n      \"campaign_id\": \"CAMP_A\",\n      \"date_from\": \"2026-04-20\"\n    },\n    \"objective\": {\n      \"primary\": \"increase_efficiency\",\n      \"secondary\": [\n        \"reduce_acos\",\n        \"improve_roas\"\n      ]\n    },\n    \"additions\": \"\",\n    \"detail_level\": \"detailed\",\n    \"automation_level\": \"recommendation_only\"\n  },\n  \"policy\": {\n    \"business_actions\": [\n      \"increase_bid\",\n      \"decrease_bid\",\n      \"increase_budget\",\n      \"decrease_budget\",\n      \"pause_campaign\",\n      \"analyze_products\",\n      \"analyze_keywords\",\n      \"keep_current_settings\"\n    ],\n    \"guardrails\": {\n      \"human_approval_required\": true,\n      \"do_not_execute_live_changes\": true,\n      \"max_bid_change_pct\": 20,\n      \"max_budget_change_pct\": 25,\n      \"require_reason_for_each_action\": true\n    }\n  },\n  \"entity\": {\n    \"type\": \"campaign\",\n    \"id\": \"CAMP_A\",\n    \"name\": \"Smartwash Launch - Broad Discovery\",\n    \"market\": \"DE\",\n    \"daily_budget\": 500,\n    \"products\": [\n      \"SWASH_001\",\n      \"SWASH_002\",\n      \"SWASH_003\"\n    ],\n    \"keywords\": [\n      \"cheap detergent\",\n      \"fresh laundry scent\",\n      \"laundry detergent\",\n      \"washing liquid\"\n    ],\n    \"days_amount\": 13,\n    \"date_range\": {\n      \"min_date\": \"2026-04-20\",\n      \"max_date\": \"2026-05-02\"\n    }\n  },\n  \"summary\": {\n    \"sum_impressions\": 1550634,\n    \"sum_clicks\": 5537,\n    \"sum_orders\": 205,\n    \"sum_spend\": 5327.55,\n    \"sum_sales\": 3723.8,\n    \"average_bid\": 1.13,\n    \"ctr\": 0.00357,\n    \"cvr\": 0.03702,\n    \"cpc\": 0.96,\n    \"roas\": 0.7,\n    \"acos\": 1.43\n  }\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        0
+      ],
+      "id": "421f838c-2db5-40e8-8d26-d1a27ad0786a",
+      "name": "Execute"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd03f642-1d93-413a-a300-64d502ac5148",
+              "name": "decision",
+              "value": "={{ $json.output }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        0
+      ],
+      "id": "9cc17e53-afbe-4f2a-87c8-d81667264321",
+      "name": "Return Decision"
+    }
+  ],
+  "pinData": {
+    "Execute": [
+      {
+        "json": {
+          "request": {
+            "mode": "campaign",
+            "conditions": {
+              "campaign_id": "CAMP_A",
+              "date_from": "2026-04-20"
+            },
+            "objective": {
+              "primary": "increase_efficiency",
+              "secondary": [
+                "reduce_acos",
+                "improve_roas"
+              ]
+            },
+            "additions": "",
+            "detail_level": "detailed",
+            "automation_level": "recommendation_only"
+          },
+          "policy": {
+            "business_actions": [
+              "increase_bid",
+              "decrease_bid",
+              "increase_budget",
+              "decrease_budget",
+              "pause_campaign",
+              "analyze_products",
+              "analyze_keywords",
+              "keep_current_settings"
+            ],
+            "guardrails": {
+              "human_approval_required": true,
+              "do_not_execute_live_changes": true,
+              "max_bid_change_pct": 20,
+              "max_budget_change_pct": 25,
+              "require_reason_for_each_action": true
+            }
+          },
+          "entity": {
+            "type": "campaign",
+            "id": "CAMP_A",
+            "name": "Smartwash Launch - Broad Discovery",
+            "market": "DE",
+            "daily_budget": 500,
+            "products": [
+              "SWASH_001",
+              "SWASH_002",
+              "SWASH_003"
+            ],
+            "keywords": [
+              "cheap detergent",
+              "fresh laundry scent",
+              "laundry detergent",
+              "washing liquid"
+            ],
+            "days_amount": 13,
+            "date_range": {
+              "min_date": "2026-04-20",
+              "max_date": "2026-05-02"
+            }
+          },
+          "summary": {
+            "sum_impressions": 1550634,
+            "sum_clicks": 5537,
+            "sum_orders": 205,
+            "sum_spend": 5327.55,
+            "sum_sales": 3723.8,
+            "average_bid": 1.13,
+            "ctr": 0.00357,
+            "cvr": 0.03702,
+            "cpc": 0.96,
+            "roas": 0.7,
+            "acos": 1.43
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Marketing Agent": {
+      "main": [
+        [
+          {
+            "node": "Return Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-5-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Marketing Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Marketing Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Marketing Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2b56574f-472d-4454-9f1e-7f9eed0d747d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a378149f5cef5f8580d6f6d2470f63e42b9d1485c2ba90d376b98ad5ecf283a5"
+  },
+  "id": "F8JZISM9SpKI9Dn6",
+  "tags": []
+}

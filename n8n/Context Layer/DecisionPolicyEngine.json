@@ -1,0 +1,210 @@
+{
+  "name": "DecisionPolicyEngine",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "campaign",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "25be1cbf-a092-4107-822d-3730d86ec591"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "campaign"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8f7a887e-2d52-4821-8460-17ddc113a674",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "product",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "product"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b14b42b1-60d6-47ce-b031-54f175a332f8",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "keyword",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "keyword "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "c31eeae8-9068-4daa-a4dd-7e01e55c828f",
+      "name": "Switch",
+      "executeOnce": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "return {\n  \"policy\": {\n    \"business_actions\": [\n      \"increase_bid\",\n      \"decrease_bid\",\n      \"increase_budget\",\n      \"decrease_budget\",\n      \"pause_campaign\",\n      \"analyze_products\",\n      \"analyze_keywords\",\n      \"keep_current_settings\"\n    ],\n    \"guardrails\": {\n      \"human_approval_required\": True,\n      \"do_not_execute_live_changes\": True,\n      \"max_bid_change_pct\": 20,\n      \"max_budget_change_pct\": 25,\n      \"require_reason_for_each_action\": True\n    }\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -208
+      ],
+      "id": "03309c37-8d8a-488d-bb50-bf7509d02bc5",
+      "name": "CampaignPolicy"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "return {\n  \"policy\": {\n    \"business_actions\": [\n      \"increase_bid\",\n      \"decrease_bid\",\n      \"add_product_to_campaign\",\n      \"remove_product_from_campaign\",\n      \"analyze_keywords\",\n      \"recommend_product_page_review\",\n      \"pause_product_ads\",\n      \"keep_current_settings\"\n    ],\n    \"guardrails\": {\n      \"human_approval_required\": True,\n      \"do_not_execute_live_changes\": True,\n      \"max_bid_change_pct\": 20,\n      \"require_reason_for_each_action\": True\n    }\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -32
+      ],
+      "id": "aac75922-fd24-43b1-b168-a31005e244b1",
+      "name": "ProductPolicy"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "return {\n  \"policy\": {\n    \"business_actions\": [\n      \"increase_bid\",\n      \"decrease_bid\",\n      \"add_keyword\",\n      \"remove_keyword\",\n      \"pause_keyword\",\n      \"analyze_products\",\n      \"add_negative_keyword\",\n      \"keep_current_settings\"\n    ],\n    \"guardrails\": {\n      \"human_approval_required\": True,\n      \"do_not_execute_live_changes\": True,\n      \"max_bid_change_pct\": 20,\n      \"require_reason_for_each_action\": True\n    }\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        144
+      ],
+      "id": "1d78cb27-3668-455e-9b77-34aaf5785529",
+      "name": "KeywordPolicy"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"mode\": \"campaign\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "4d4d0353-7fa7-4e1d-9c66-0f40911d7fff",
+      "name": "Execute"
+    }
+  ],
+  "pinData": {
+    "Execute": [
+      {
+        "json": {
+          "mode": "campaign"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "CampaignPolicy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ProductPolicy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "KeywordPolicy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "870128a7-d474-4e11-9db6-5a108be335f3",
+  "meta": {
+    "instanceId": "a378149f5cef5f8580d6f6d2470f63e42b9d1485c2ba90d376b98ad5ecf283a5"
+  },
+  "id": "6Oxzbdgl2yAVKpW3",
+  "tags": []
+}

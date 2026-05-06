@@ -1,0 +1,232 @@
+{
+  "name": "MetricsEngine",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0955f624-ab70-45e9-82e3-43adc5606c9b",
+              "name": "sum_sales",
+              "value": "={{ $json.sum_sales.round(2) }}",
+              "type": "number"
+            },
+            {
+              "id": "ceb147c3-05ae-4975-8065-c119b8f63c7a",
+              "name": "average_bid",
+              "value": "={{ \n$if(\n  $json.average_bid != null,\n  $json.average_bid.round(2),\n  0\n)\n}}",
+              "type": "number"
+            },
+            {
+              "id": "dfa5cf4c-5412-4293-8675-9b1246c491f0",
+              "name": "sum_spend",
+              "value": "={{ $json.sum_spend.round(2) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        -32
+      ],
+      "id": "36e6c24c-2920-4d32-aa30-f56dc8bfd686",
+      "name": "RoundNums"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b6f97865-7921-473e-bd1f-9402bdb725bb",
+              "name": "ctr",
+              "value": "={{ ($json.sum_clicks / $json.sum_impressions).round(5) }}",
+              "type": "number"
+            },
+            {
+              "id": "227d3b60-84b3-4de1-8cd1-b7adbecc0e36",
+              "name": "cvr",
+              "value": "={{ ($json.sum_orders / $json.sum_clicks).round(5)}}",
+              "type": "number"
+            },
+            {
+              "id": "460c29f0-ccb4-4a4e-ac11-30e48c850acb",
+              "name": "cpc",
+              "value": "={{ ($json.sum_spend / $json.sum_clicks).round(2) }}",
+              "type": "number"
+            },
+            {
+              "id": "2fcf7d8f-5b60-41f5-8d85-ba8a8b48aab9",
+              "name": "roas",
+              "value": "={{ ($json.sum_sales / $json.sum_spend).round(2)}}",
+              "type": "number"
+            },
+            {
+              "id": "61dd6b11-0023-4a8d-b63a-e8efc8f9c9df",
+              "name": "acos",
+              "value": "={{ ($json.sum_spend / $json.sum_sales).round(2) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        -32
+      ],
+      "id": "1ffdf14c-a201-4aaf-9e02-73839719c983",
+      "name": "CalculateMetrics"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "sum",
+              "field": "impressions"
+            },
+            {
+              "aggregation": "sum",
+              "field": "clicks"
+            },
+            {
+              "aggregation": "sum",
+              "field": "orders"
+            },
+            {
+              "aggregation": "sum",
+              "field": "spend"
+            },
+            {
+              "aggregation": "sum",
+              "field": "sales"
+            },
+            {
+              "aggregation": "average",
+              "field": "bid"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        -32
+      ],
+      "id": "c6689ff2-2af6-40a7-af36-2215919b042e",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"summary\": {{ $json }}\n}\n",
+        "includeOtherFields": true,
+        "include": "selected",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        -32
+      ],
+      "id": "49eabcb8-5ca2-4464-8983-2ab7c3ee2513",
+      "name": "ReturnSummary"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"impressions\": 17918,\n  \"clicks\": 71,\n  \"spend\": 95.64,\n  \"orders\": 4,\n  \"sales\": 61.35,\n  \"bid\": 1.45\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        -32
+      ],
+      "id": "8457c932-e703-4185-a240-2a303b091a34",
+      "name": "Execute"
+    }
+  ],
+  "pinData": {
+    "Execute": [
+      {
+        "json": {
+          "impressions": 17918,
+          "clicks": 71,
+          "spend": 95.64,
+          "orders": 4,
+          "sales": 61.35,
+          "bid": 1.45
+        }
+      }
+    ]
+  },
+  "connections": {
+    "RoundNums": {
+      "main": [
+        [
+          {
+            "node": "CalculateMetrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "RoundNums",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalculateMetrics": {
+      "main": [
+        [
+          {
+            "node": "ReturnSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e84502a2-a16d-41ad-b59e-12af93d19fb1",
+  "meta": {
+    "instanceId": "a378149f5cef5f8580d6f6d2470f63e42b9d1485c2ba90d376b98ad5ecf283a5"
+  },
+  "id": "NnAAe8pM7pLLRAia",
+  "tags": []
+}

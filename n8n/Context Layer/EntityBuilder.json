@@ -1,0 +1,354 @@
+{
+  "name": "EntityBuilder",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "campaign",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "25be1cbf-a092-4107-822d-3730d86ec591"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "campaign"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8f7a887e-2d52-4821-8460-17ddc113a674",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "product",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "product"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b14b42b1-60d6-47ce-b031-54f175a332f8",
+                    "leftValue": "={{ $json.mode }}",
+                    "rightValue": "keyword",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "keyword "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        576
+      ],
+      "id": "634203a7-b4a7-4cb2-a50c-570bc084dde3",
+      "name": "Switch",
+      "executeOnce": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "AYkJ01iti777zR5r",
+          "mode": "list",
+          "cachedResultName": "amazon_ads",
+          "cachedResultUrl": "/projects/oW2ogFTZYhpJ45cx/datatables/AYkJ01iti777zR5r"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "asin",
+              "keyValue": "={{ $json.conditions.asin }}"
+            },
+            {
+              "keyName": "date",
+              "condition": "gte",
+              "keyValue": "={{ \n$if\n(\n$json.conditions.hasField(\"date_from\"), \n$json.conditions.date_from, \n0\n)\n}}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        592
+      ],
+      "id": "e4602c9b-90c1-4b81-9f62-99e230d6ae50",
+      "name": "GetDataProduct"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "AYkJ01iti777zR5r",
+          "mode": "list",
+          "cachedResultName": "amazon_ads",
+          "cachedResultUrl": "/projects/oW2ogFTZYhpJ45cx/datatables/AYkJ01iti777zR5r"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "keyword_target",
+              "keyValue": "={{ $json.conditions.keyword_target }}"
+            },
+            {
+              "keyName": "date",
+              "condition": "gte",
+              "keyValue": "={{ \n$if\n(\n$json.conditions.hasField(\"date_from\"), \n$json.conditions.date_from, \n0\n)\n}}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        784
+      ],
+      "id": "05d4c8da-3bb3-4cad-b379-f47a26147867",
+      "name": "GetDataKeyword"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "AYkJ01iti777zR5r",
+          "mode": "list",
+          "cachedResultName": "amazon_ads",
+          "cachedResultUrl": "/projects/oW2ogFTZYhpJ45cx/datatables/AYkJ01iti777zR5r"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "campaign_id",
+              "keyValue": "={{ $json.conditions.campaign_id }}"
+            },
+            {
+              "keyName": "date",
+              "condition": "gte",
+              "keyValue": "={{ \n$if\n(\n$json.conditions.hasField(\"date_from\"), \n$json.conditions.date_from, \n0\n)\n}}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        400
+      ],
+      "id": "eda3a923-bd3c-42ab-942c-d5bb63127703",
+      "name": "GetDataCampaign",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "rows = [item[\"json\"] for item in _items]\n\ndef uniq(key):\n    return sorted({r.get(key) for r in rows if r.get(key) is not None})\n\ndef one_or_many(values):\n    return values[0] if len(values) == 1 else values\n\ndef date_only(value):\n    return value[:10] if value else None\n\ndates = sorted({date_only(r.get(\"date\")) for r in rows if r.get(\"date\")})\nbudgets = [float(r[\"daily_budget\"]) for r in rows if r.get(\"daily_budget\") is not None]\n\nentity = {\n    \"type\": \"campaign\",\n    \"id\": one_or_many(uniq(\"campaign_id\")),\n    \"name\": one_or_many(uniq(\"campaign_name\")),\n    \"market\": one_or_many(uniq(\"market\")),\n    \"daily_budget\": round(sum(budgets) / len(budgets), 2) if budgets else None,\n    \"products\": uniq(\"asin\"),\n    \"keywords\": uniq(\"keyword_target\"),\n    \"days_amount\": len(dates),\n    \"date_range\": {\n        \"min_date\": dates[0] if dates else None,\n        \"max_date\": dates[-1] if dates else None,\n    },\n}\n\nreturn [{\"json\": {\"entity\": entity}}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        400
+      ],
+      "id": "2e2e390b-5da5-4725-b6c4-6882ce49c425",
+      "name": "CampaignSummary"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "rows = [item[\"json\"] for item in _items]\n\ndef uniq(key):\n    return sorted({r.get(key) for r in rows if r.get(key) is not None})\n\ndef one_or_many(values):\n    return values[0] if len(values) == 1 else values\n\ndef date_only(value):\n    return value[:10] if value else None\n\ndates = sorted({date_only(r.get(\"date\")) for r in rows if r.get(\"date\")})\n\nentity = {\n    \"type\": \"product\",\n    \"asin\": one_or_many(uniq(\"asin\")),\n    \"product_name\": one_or_many(uniq(\"product_name\")),\n    \"market\": one_or_many(uniq(\"market\")),\n    \"campaigns\": uniq(\"campaign_id\"),\n    \"keywords\": uniq(\"keyword_target\"),\n    \"days_amount\": len(dates),\n    \"date_range\": {\n        \"min_date\": dates[0] if dates else None,\n        \"max_date\": dates[-1] if dates else None,\n    },\n}\n\nreturn [{\"json\": {\"entity\": entity}}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        592
+      ],
+      "id": "c071a771-bb68-4b38-a35a-9eaf058efd04",
+      "name": "ProductSummary"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "rows = [item[\"json\"] for item in _items]\n\ndef uniq(key):\n    return sorted({r.get(key) for r in rows if r.get(key) is not None})\n\ndef one_or_many(values):\n    return values[0] if len(values) == 1 else values\n\ndef date_only(value):\n    return value[:10] if value else None\n\ndates = sorted({date_only(r.get(\"date\")) for r in rows if r.get(\"date\")})\n\nentity = {\n    \"type\": \"keyword\",\n    \"keyword_target\": one_or_many(uniq(\"keyword_target\")),\n    \"market\": one_or_many(uniq(\"market\")),\n    \"campaigns\": uniq(\"campaign_id\"),\n    \"products\": uniq(\"asin\"),\n    \"days_amount\": len(dates),\n    \"date_range\": {\n        \"min_date\": dates[0] if dates else None,\n        \"max_date\": dates[-1] if dates else None,\n    },\n}\n\nreturn [{\"json\": {\"entity\": entity}}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        784
+      ],
+      "id": "ef1d418b-d1cd-4f52-babf-6fd5d956c9af",
+      "name": "KeywordSummary"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"mode\": \"campaign\",\n  \"conditions\": {\n    \"campaign_id\": \"CAMP_A\",\n    \"date\": \"2026-04-20\"\n  }\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        592
+      ],
+      "id": "994991cb-1689-48c1-af37-c6943047f485",
+      "name": "Execute",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {
+    "Execute": [
+      {
+        "json": {
+          "mode": "product",
+          "conditions": {
+            "asin": "SWASH_002",
+            "date": "2026-04-20"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "GetDataCampaign",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GetDataProduct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GetDataKeyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetDataProduct": {
+      "main": [
+        [
+          {
+            "node": "ProductSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetDataKeyword": {
+      "main": [
+        [
+          {
+            "node": "KeywordSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetDataCampaign": {
+      "main": [
+        [
+          {
+            "node": "CampaignSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ed48e25a-3421-44b9-af1b-1136473e484a",
+  "meta": {
+    "instanceId": "a378149f5cef5f8580d6f6d2470f63e42b9d1485c2ba90d376b98ad5ecf283a5"
+  },
+  "id": "wm3pkI3dvACNKbES",
+  "tags": []
+}

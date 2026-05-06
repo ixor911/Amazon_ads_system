@@ -1,0 +1,511 @@
+{
+  "name": "Execution Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        240
+      ],
+      "id": "dc0d7827-99f2-41f6-a5f1-bd5b8384e9a4",
+      "name": "gpt-5-mini",
+      "notesInFlow": false,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create an execution plan and insert one row into the agent_action_log table.\n\nINPUT DATA\n\nREQUEST:\n{{ JSON.stringify($json.request, null, 2) }}\n\nPOLICY:\n{{ JSON.stringify($json.policy, null, 2) }}\n\nENTITY:\n{{ JSON.stringify($json.entity, null, 2) }}\n\nSUMMARY:\n{{ JSON.stringify($json.summary, null, 2) }}\n\nDECISION:\n{{ JSON.stringify($json.decision, null, 2) }}\n\nTASK\n\n1. Read DECISION.recommended_actions.\n2. Validate each action using POLICY.business_actions and POLICY.guardrails.\n3. Create action_records for valid actions.\n4. Create rejected_actions for invalid actions.\n5. Insert exactly one row into agent_action_log using Insert Log.\n6. Return the final execution JSON.\n\nACTION RECORD FORMAT\n\nFor each valid action, create this object:\n\n{\n  \"action\": \"...\",\n  \"target\": \"...\",\n  \"target_type\": \"...\",\n  \"change_pct\": 0,\n  \"priority\": \"...\",\n  \"risk_level\": \"...\",\n  \"confidence\": 0,\n  \"status\": \"pending_human_review\",\n  \"can_execute_live\": false,\n  \"human_review_required\": true,\n  \"reason\": \"...\",\n  \"execution_note\": \"Recommendation only. No live change was executed.\"\n}\n\nUse change_pct = null when the action does not require a percentage change.\n\nSTATUS LOGIC\n\nSet:\n- can_execute_live = false\n- human_review_required = POLICY.guardrails.human_approval_required\n- execution_mode = REQUEST.automation_level\n\nSet overall_status:\n- \"pending_human_review\" if valid actions > 0 and rejected actions = 0\n- \"partially_rejected\" if valid actions > 0 and rejected actions > 0\n- \"rejected\" if valid actions = 0 and rejected actions > 0\n- \"logged_only\" if there are no actions to process\n\nINSERT LOG INSTRUCTIONS\n\nUse Insert Log exactly once.\n\nWhen calling Insert Log, manually fill exactly these 14 table columns:\n\nmode:\nUse REQUEST.mode\n\nentity_type:\nUse ENTITY.type\n\nentity_id:\nUse ENTITY.id if present, otherwise ENTITY.asin if present, otherwise ENTITY.keyword_target\n\nentity_name:\nUse ENTITY.name if present, otherwise ENTITY.product_name if present, otherwise ENTITY.keyword_target\n\nmarket:\nUse ENTITY.market\n\nautomation_level:\nUse REQUEST.automation_level\n\noverall_status:\nUse computed overall_status\n\nhuman_review_required:\nUse computed human_review_required\n\ncan_execute_live:\nUse false\n\ndiagnosis:\nUse DECISION.diagnosis\n\nsummary_for_user:\nUse DECISION.summary_for_user\n\nexecution_summary:\nUse a short plain text summary, for example:\n\"Prepared X action records for human review. No live changes were executed.\"\n\naction_records_json:\nUse a serialized JSON string of action_records.\nThis must be a string, not an array.\n\nfull_context_json:\nUse a serialized JSON string containing:\n{\n  \"request\": REQUEST,\n  \"policy\": POLICY,\n  \"entity\": ENTITY,\n  \"summary\": SUMMARY,\n  \"decision\": DECISION,\n  \"execution\": {\n    \"agent_type\": \"Action Execution Agent\",\n    \"execution_mode\": REQUEST.automation_level,\n    \"overall_status\": overall_status,\n    \"can_execute_live\": false,\n    \"human_review_required\": human_review_required,\n    \"actions_total\": total number of DECISION.recommended_actions,\n    \"valid_actions_count\": number of valid actions,\n    \"rejected_actions_count\": number of rejected actions,\n    \"execution_summary\": execution_summary,\n    \"action_records\": action_records,\n    \"rejected_actions\": rejected_actions,\n    \"next_step\": \"human_review\",\n    \"logged_to_action_table\": true\n  }\n}\n\nCRITICAL TOOL RULES\n\nWhen using Insert Log:\n- Do not include a field named request.\n- Do not include a field named policy.\n- Do not include a field named entity.\n- Do not include a field named summary.\n- Do not include a field named output.\n- Do not include a field named decision.\n- Do not include a field named execution.\n- Do not include a field named action_records.\n- Do not include a field named rejected_actions.\n\nOnly insert these exact table fields:\nmode, entity_type, entity_id, entity_name, market, automation_level, overall_status, human_review_required, can_execute_live, diagnosis, summary_for_user, execution_summary, action_records_json, full_context_json\n\nFINAL RESPONSE\n\nAfter Insert Log succeeds, return exactly this JSON structure:\n\n{\n  \"execution\": {\n    \"agent_type\": \"Action Execution Agent\",\n    \"execution_mode\": \"...\",\n    \"overall_status\": \"...\",\n    \"can_execute_live\": false,\n    \"human_review_required\": true,\n    \"actions_total\": 0,\n    \"valid_actions_count\": 0,\n    \"rejected_actions_count\": 0,\n    \"execution_summary\": \"...\",\n    \"action_records\": [],\n    \"rejected_actions\": [],\n    \"next_step\": \"human_review\",\n    \"logged_to_action_table\": true,\n    \"summary_for_user\": \"...\"\n  }\n}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an Action Execution Agent.\n\nYour only job is to prepare an execution result and insert exactly one row into the agent_action_log table using the Insert Log tool.\n\nYou do not perform new marketing analysis.\nYou do not execute live Amazon Ads changes.\nYou do not invent new actions.\nYou only process the previous agent decision.\n\nYou receive:\n- request\n- policy\n- entity\n- summary\n- output\n\nThe Insert Log tool writes to exactly one table: agent_action_log.\n\nThe agent_action_log table has exactly these columns:\nmode, entity_type, entity_id, entity_name, market, automation_level, overall_status, human_review_required, can_execute_live, diagnosis, summary_for_user, execution_summary, action_records_json, full_context_json\n\nWhen using Insert Log:\n- Fill only these columns.\n- Do not send any other fields.\n- Do not send request as an object.\n- Do not send policy as an object.\n- Do not send entity as an object.\n- Do not send summary as an object.\n- Do not send output as an object.\n- Do not send execution as an object.\n- Do not send action_records as an array.\n- action_records_json must be a JSON string.\n- full_context_json must be a JSON string.\n\nValidation rules:\n- Valid actions must exist in policy.business_actions.\n- increase_bid and decrease_bid require numeric change_pct not greater than policy.guardrails.max_bid_change_pct.\n- increase_budget and decrease_budget require numeric change_pct not greater than policy.guardrails.max_budget_change_pct.\n- Non-bid and non-budget actions may use change_pct = null.\n- Invalid actions should be listed in rejected_actions in the final output and inside full_context_json.\n\nExecution rules:\n- If request.automation_level is recommendation_only, no live changes are executed.\n- If policy.guardrails.do_not_execute_live_changes is true, can_execute_live must be false.\n- If policy.guardrails.human_approval_required is true, human_review_required must be true.\n- Valid actions should have status pending_human_review.\n\nUse Insert Log exactly once.\n\nAfter using Insert Log, return only valid JSON in the required response format.\nDo not include markdown.\nDo not include text outside JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        16
+      ],
+      "id": "afa5f7e7-6269-4f6a-9596-115fc3b2a678",
+      "name": "Execution Agent",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"execution\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"agent_type\": {\n          \"type\": \"string\"\n        },\n        \"execution_mode\": {\n          \"type\": \"string\",\n          \"enum\": [\"recommendation_only\", \"approval_required\", \"auto_apply_low_risk\"]\n        },\n        \"overall_status\": {\n          \"type\": \"string\",\n          \"enum\": [\"pending_human_review\", \"partially_rejected\", \"rejected\", \"logged_only\"]\n        },\n        \"can_execute_live\": {\n          \"type\": \"boolean\"\n        },\n        \"human_review_required\": {\n          \"type\": \"boolean\"\n        },\n        \"actions_total\": {\n          \"type\": \"number\"\n        },\n        \"valid_actions_count\": {\n          \"type\": \"number\"\n        },\n        \"rejected_actions_count\": {\n          \"type\": \"number\"\n        },\n        \"execution_summary\": {\n          \"type\": \"string\"\n        },\n        \"action_records\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"action\": { \"type\": \"string\" },\n              \"target\": { \"type\": \"string\" },\n              \"target_type\": { \"type\": \"string\" },\n              \"change_pct\": { \"type\": [\"number\", \"null\"] },\n              \"priority\": {\n                \"type\": \"string\",\n                \"enum\": [\"low\", \"medium\", \"high\"]\n              },\n              \"risk_level\": {\n                \"type\": \"string\",\n                \"enum\": [\"low\", \"medium\", \"high\"]\n              },\n              \"confidence\": { \"type\": \"number\" },\n              \"status\": {\n                \"type\": \"string\",\n                \"enum\": [\"pending_human_review\", \"ready_for_execution\", \"rejected\", \"logged_only\"]\n              },\n              \"can_execute_live\": { \"type\": \"boolean\" },\n              \"human_review_required\": { \"type\": \"boolean\" },\n              \"reason\": { \"type\": \"string\" },\n              \"execution_note\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": false,\n            \"required\": [\n              \"action\",\n              \"target\",\n              \"target_type\",\n              \"change_pct\",\n              \"priority\",\n              \"risk_level\",\n              \"confidence\",\n              \"status\",\n              \"can_execute_live\",\n              \"human_review_required\",\n              \"reason\",\n              \"execution_note\"\n            ]\n          }\n        },\n        \"rejected_actions\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"action\": { \"type\": \"string\" },\n              \"target\": { \"type\": \"string\" },\n              \"reason\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": false,\n            \"required\": [\"action\", \"target\", \"reason\"]\n          }\n        },\n        \"next_step\": {\n          \"type\": \"string\",\n          \"enum\": [\"human_review\", \"no_action\", \"manual_fix_required\"]\n        },\n        \"logged_to_action_table\": {\n          \"type\": \"boolean\"\n        },\n        \"summary_for_user\": {\n          \"type\": \"string\"\n        }\n      },\n      \"additionalProperties\": false,\n      \"required\": [\n        \"agent_type\",\n        \"execution_mode\",\n        \"overall_status\",\n        \"can_execute_live\",\n        \"human_review_required\",\n        \"actions_total\",\n        \"valid_actions_count\",\n        \"rejected_actions_count\",\n        \"execution_summary\",\n        \"action_records\",\n        \"rejected_actions\",\n        \"next_step\",\n        \"logged_to_action_table\",\n        \"summary_for_user\"\n      ]\n    }\n  },\n  \"additionalProperties\": false,\n  \"required\": [\"execution\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        224
+      ],
+      "id": "39259259-68b8-4a2e-9ea9-b31d94fd5833",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"request\": {\n    \"mode\": \"campaign\",\n    \"conditions\": {\n      \"campaign_id\": \"CAMP_A\",\n      \"date_from\": \"2026-04-20\"\n    },\n    \"objective\": {\n      \"primary\": \"increase_efficiency\",\n      \"secondary\": [\n        \"reduce_acos\",\n        \"improve_roas\"\n      ]\n    },\n    \"additions\": \"\",\n    \"detail_level\": \"detailed\",\n    \"automation_level\": \"recommendation_only\"\n  },\n  \"policy\": {\n    \"business_actions\": [\n      \"increase_bid\",\n      \"decrease_bid\",\n      \"increase_budget\",\n      \"decrease_budget\",\n      \"pause_campaign\",\n      \"analyze_products\",\n      \"analyze_keywords\",\n      \"keep_current_settings\"\n    ],\n    \"guardrails\": {\n      \"human_approval_required\": true,\n      \"do_not_execute_live_changes\": true,\n      \"max_bid_change_pct\": 20,\n      \"max_budget_change_pct\": 25,\n      \"require_reason_for_each_action\": true\n    }\n  },\n  \"entity\": {\n    \"type\": \"campaign\",\n    \"id\": \"CAMP_A\",\n    \"name\": \"Smartwash Launch - Broad Discovery\",\n    \"market\": \"DE\",\n    \"daily_budget\": 500,\n    \"products\": [\n      \"SWASH_001\",\n      \"SWASH_002\",\n      \"SWASH_003\"\n    ],\n    \"keywords\": [\n      \"cheap detergent\",\n      \"fresh laundry scent\",\n      \"laundry detergent\",\n      \"washing liquid\"\n    ],\n    \"days_amount\": 13,\n    \"date_range\": {\n      \"min_date\": \"2026-04-20\",\n      \"max_date\": \"2026-05-02\"\n    }\n  },\n  \"summary\": {\n    \"sum_impressions\": 1550634,\n    \"sum_clicks\": 5537,\n    \"sum_orders\": 205,\n    \"sum_spend\": 5327.55,\n    \"sum_sales\": 3723.8,\n    \"average_bid\": 1.13,\n    \"ctr\": 0.00357,\n    \"cvr\": 0.03702,\n    \"cpc\": 0.96,\n    \"roas\": 0.7,\n    \"acos\": 1.43\n  },\n  \"decision\": {\n    \"agent_type\": \"Marketing Optimization Agent for Amazon Ads\",\n    \"diagnosis\": \"Campaign 'Smartwash Launch - Broad Discovery' (CAMP_A) is underperforming on efficiency. Key metrics: ROAS 0.7 (well below 1.0), ACoS 143% (very high), CTR 0.357% (very low), CVR 3.70% (low), CPC €0.96, average bid €1.13, total spend €5,327.55 over 13 days (~€409/day vs daily_budget €500). The campaign is generating sales but at a loss — ad spend exceeds attributable sales. Low CTR indicates targeting/keyword relevance problems; low CVR suggests potential listing or conversion issues. Recommended conservative actions: lower bids to reduce inefficient spend, run keyword and product analyses to identify relevance and conversion problems, and temporarily reduce budget to limit further inefficient spend while optimizations are implemented. All recommendations require human approval per guardrails.\",\n    \"recommended_actions\": [\n      {\n        \"action\": \"decrease_bid\",\n        \"target\": \"CAMP_A\",\n        \"change_pct\": 15,\n        \"priority\": \"high\",\n        \"confidence\": 0.9,\n        \"risk_level\": \"medium\",\n        \"requires_human_approval\": true,\n        \"reason\": \"ROAS is 0.7 and ACoS is 143% indicating inefficient CPC spend. Average bid €1.13 and CPC €0.96 suggest bids can be trimmed. A conservative 15% bid decrease (within 20% guardrail) should reduce wasted spend while preserving volume for testing.\"\n      },\n      {\n        \"action\": \"analyze_keywords\",\n        \"target\": \"CAMP_A\",\n        \"change_pct\": null,\n        \"priority\": \"high\",\n        \"confidence\": 0.85,\n        \"risk_level\": \"low\",\n        \"requires_human_approval\": true,\n        \"reason\": \"Very low CTR (0.357%) implies targeting or keyword relevance issues. Analyze search terms, match types, and top-performing vs. wasting keywords; add negatives and tighten match types to improve relevance and CTR, which will improve efficiency.\"\n      },\n      {\n        \"action\": \"analyze_products\",\n        \"target\": \"CAMP_A\",\n        \"change_pct\": null,\n        \"priority\": \"medium\",\n        \"confidence\": 0.8,\n        \"risk_level\": \"low\",\n        \"requires_human_approval\": true,\n        \"reason\": \"Low CVR (3.70%) alongside poor ROAS suggests conversion or listing issues for the campaign's products (SWASH_001, SWASH_002, SWASH_003). Review product pages (images, titles, bullets, price, reviews, buy box) to identify barriers to purchase.\"\n      },\n      {\n        \"action\": \"decrease_budget\",\n        \"target\": \"CAMP_A\",\n        \"change_pct\": 10,\n        \"priority\": \"medium\",\n        \"confidence\": 0.75,\n        \"risk_level\": \"medium\",\n        \"requires_human_approval\": true,\n        \"reason\": \"Campaign is spending ~€409/day with poor efficiency. Temporarily reducing daily budget by 10% (within 25% guardrail) limits further inefficient spend while keyword and product analyses are completed.\"\n      }\n    ],\n    \"summary_for_user\": \"Campaign is losing efficiency: ROAS 0.7 and ACoS 143% with low CTR (0.357%) and low CVR (3.7%). Recommend a conservative 15% bid decrease, run keyword and product analyses, and temporarily reduce budget by 10%. All recommendations are for review and require human approval.\"\n  }\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        16
+      ],
+      "id": "68f6e8c3-c8bc-4caf-b3e8-6e38bc7a5bc9",
+      "name": "Execute"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "=\n{{ $json.output }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        16
+      ],
+      "id": "de90fa55-8db8-4556-9a65-05b5622934f6",
+      "name": "Edit"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "tzDSTZ32rwoxyMhf",
+          "mode": "list",
+          "cachedResultName": "execution_agent_log",
+          "cachedResultUrl": "/projects/oW2ogFTZYhpJ45cx/datatables/tzDSTZ32rwoxyMhf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "can_execute_live": "={{ $json.execution.can_execute_live }}",
+            "human_review_required": "={{ $json.execution.human_review_required }}",
+            "logged_to_action_table": "={{ $json.execution.logged_to_action_table }}",
+            "agent_type": "={{ $json.execution.agent_type }}",
+            "execution_mode": "={{ $json.execution.execution_mode }}",
+            "overall_status": "={{ $json.execution.overall_status }}",
+            "actions_total": "={{ $json.execution.actions_total }}",
+            "valid_actions_count": "={{ $json.execution.valid_actions_count }}",
+            "rejected_actions_count": "={{ $json.execution.rejected_actions_count }}",
+            "execution_summary": "=\"{{ $json.execution.execution_summary }}\"",
+            "action_records_json": "=  {{ $json.execution.action_records.toJsonString()}}",
+            "rejected_actions_json": "={{ $json.execution.rejected_actions.toJsonString() }}",
+            "next_step": "={{ $json.execution.next_step }}",
+            "summary_for_user": "=\"{{ $json.execution.summary_for_user }}\""
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "agent_type",
+              "displayName": "agent_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_mode",
+              "displayName": "execution_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "overall_status",
+              "displayName": "overall_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "can_execute_live",
+              "displayName": "can_execute_live",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "human_review_required",
+              "displayName": "human_review_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "actions_total",
+              "displayName": "actions_total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "valid_actions_count",
+              "displayName": "valid_actions_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "rejected_actions_count",
+              "displayName": "rejected_actions_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_summary",
+              "displayName": "execution_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action_records_json",
+              "displayName": "action_records_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "rejected_actions_json",
+              "displayName": "rejected_actions_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "next_step",
+              "displayName": "next_step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "logged_to_action_table",
+              "displayName": "logged_to_action_table",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary_for_user",
+              "displayName": "summary_for_user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        160
+      ],
+      "id": "e3d23f81-43ec-4e79-8ed5-e84d77edcd0b",
+      "name": "Insert Log"
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "query": "SELECT * FROM input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        32
+      ],
+      "id": "091fa335-149c-4a28-ba88-f76bd883b08c",
+      "name": "Return Execution"
+    }
+  ],
+  "pinData": {
+    "Execute": [
+      {
+        "json": {
+          "request": {
+            "mode": "campaign",
+            "conditions": {
+              "campaign_id": "CAMP_A",
+              "date_from": "2026-04-20"
+            },
+            "objective": {
+              "primary": "increase_efficiency",
+              "secondary": [
+                "reduce_acos",
+                "improve_roas"
+              ]
+            },
+            "additions": "",
+            "detail_level": "detailed",
+            "automation_level": "recommendation_only"
+          },
+          "policy": {
+            "business_actions": [
+              "increase_bid",
+              "decrease_bid",
+              "increase_budget",
+              "decrease_budget",
+              "pause_campaign",
+              "analyze_products",
+              "analyze_keywords",
+              "keep_current_settings"
+            ],
+            "guardrails": {
+              "human_approval_required": true,
+              "do_not_execute_live_changes": true,
+              "max_bid_change_pct": 20,
+              "max_budget_change_pct": 25,
+              "require_reason_for_each_action": true
+            }
+          },
+          "entity": {
+            "type": "campaign",
+            "id": "CAMP_A",
+            "name": "Smartwash Launch - Broad Discovery",
+            "market": "DE",
+            "daily_budget": 500,
+            "products": [
+              "SWASH_001",
+              "SWASH_002",
+              "SWASH_003"
+            ],
+            "keywords": [
+              "cheap detergent",
+              "fresh laundry scent",
+              "laundry detergent",
+              "washing liquid"
+            ],
+            "days_amount": 13,
+            "date_range": {
+              "min_date": "2026-04-20",
+              "max_date": "2026-05-02"
+            }
+          },
+          "summary": {
+            "sum_impressions": 1550634,
+            "sum_clicks": 5537,
+            "sum_orders": 205,
+            "sum_spend": 5327.55,
+            "sum_sales": 3723.8,
+            "average_bid": 1.13,
+            "ctr": 0.00357,
+            "cvr": 0.03702,
+            "cpc": 0.96,
+            "roas": 0.7,
+            "acos": 1.43
+          },
+          "decision": {
+            "agent_type": "Marketing Optimization Agent for Amazon Ads",
+            "diagnosis": "Campaign 'Smartwash Launch - Broad Discovery' (CAMP_A) is underperforming on efficiency. Key metrics: ROAS 0.7 (well below 1.0), ACoS 143% (very high), CTR 0.357% (very low), CVR 3.70% (low), CPC €0.96, average bid €1.13, total spend €5,327.55 over 13 days (~€409/day vs daily_budget €500). The campaign is generating sales but at a loss — ad spend exceeds attributable sales. Low CTR indicates targeting/keyword relevance problems; low CVR suggests potential listing or conversion issues. Recommended conservative actions: lower bids to reduce inefficient spend, run keyword and product analyses to identify relevance and conversion problems, and temporarily reduce budget to limit further inefficient spend while optimizations are implemented. All recommendations require human approval per guardrails.",
+            "recommended_actions": [
+              {
+                "action": "decrease_bid",
+                "target": "CAMP_A",
+                "change_pct": 15,
+                "priority": "high",
+                "confidence": 0.9,
+                "risk_level": "medium",
+                "requires_human_approval": true,
+                "reason": "ROAS is 0.7 and ACoS is 143% indicating inefficient CPC spend. Average bid €1.13 and CPC €0.96 suggest bids can be trimmed. A conservative 15% bid decrease (within 20% guardrail) should reduce wasted spend while preserving volume for testing."
+              },
+              {
+                "action": "analyze_keywords",
+                "target": "CAMP_A",
+                "change_pct": null,
+                "priority": "high",
+                "confidence": 0.85,
+                "risk_level": "low",
+                "requires_human_approval": true,
+                "reason": "Very low CTR (0.357%) implies targeting or keyword relevance issues. Analyze search terms, match types, and top-performing vs. wasting keywords; add negatives and tighten match types to improve relevance and CTR, which will improve efficiency."
+              },
+              {
+                "action": "analyze_products",
+                "target": "CAMP_A",
+                "change_pct": null,
+                "priority": "medium",
+                "confidence": 0.8,
+                "risk_level": "low",
+                "requires_human_approval": true,
+                "reason": "Low CVR (3.70%) alongside poor ROAS suggests conversion or listing issues for the campaign's products (SWASH_001, SWASH_002, SWASH_003). Review product pages (images, titles, bullets, price, reviews, buy box) to identify barriers to purchase."
+              },
+              {
+                "action": "decrease_budget",
+                "target": "CAMP_A",
+                "change_pct": 10,
+                "priority": "medium",
+                "confidence": 0.75,
+                "risk_level": "medium",
+                "requires_human_approval": true,
+                "reason": "Campaign is spending ~€409/day with poor efficiency. Temporarily reducing daily budget by 10% (within 25% guardrail) limits further inefficient spend while keyword and product analyses are completed."
+              }
+            ],
+            "summary_for_user": "Campaign is losing efficiency: ROAS 0.7 and ACoS 143% with low CTR (0.357%) and low CVR (3.7%). Recommend a conservative 15% bid decrease, run keyword and product analyses, and temporarily reduce budget by 10%. All recommendations are for review and require human approval."
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "gpt-5-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Execution Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Execution Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execution Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Execution Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit": {
+      "main": [
+        [
+          {
+            "node": "Insert Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Return Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Log": {
+      "main": [
+        [
+          {
+            "node": "Return Execution",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Return Execution": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "969c84aa-187e-442b-b728-a669ca04a426",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a378149f5cef5f8580d6f6d2470f63e42b9d1485c2ba90d376b98ad5ecf283a5"
+  },
+  "id": "9C5AxyvJZQE9l9gb",
+  "tags": []
+}
