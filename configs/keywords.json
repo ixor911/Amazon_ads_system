@@ -1,0 +1,44 @@
+[
+  {
+    "keyword_target": "smartwash detergent",
+    "ctr_modifier": 1.30,
+    "cvr_modifier": 1.25,
+    "cpc_modifier": 1.10
+  },
+  {
+    "keyword_target": "laundry detergent",
+    "ctr_modifier": 1.00,
+    "cvr_modifier": 1.00,
+    "cpc_modifier": 1.00
+  },
+  {
+    "keyword_target": "washing liquid",
+    "ctr_modifier": 0.95,
+    "cvr_modifier": 0.95,
+    "cpc_modifier": 0.95
+  },
+  {
+    "keyword_target": "detergent pods",
+    "ctr_modifier": 1.20,
+    "cvr_modifier": 1.15,
+    "cpc_modifier": 1.05
+  },
+  {
+    "keyword_target": "fresh laundry scent",
+    "ctr_modifier": 0.55,
+    "cvr_modifier": 0.50,
+    "cpc_modifier": 0.80
+  },
+  {
+    "keyword_target": "cheap detergent",
+    "ctr_modifier": 0.85,
+    "cvr_modifier": 0.45,
+    "cpc_modifier": 0.75
+  },
+  {
+    "keyword_target": "eco laundry detergent",
+    "ctr_modifier": 0.90,
+    "cvr_modifier": 0.90,
+    "cpc_modifier": 1.15
+  }
+]

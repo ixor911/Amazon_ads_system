@@ -1,0 +1,20 @@
+[
+  {
+    "asin": "SWASH_001",
+    "product_name": "Smartwash Universal Detergent",
+    "base_price": 16.99,
+    "conversion_modifier": 1.00
+  },
+  {
+    "asin": "SWASH_002",
+    "product_name": "Smartwash Color Detergent",
+    "base_price": 18.49,
+    "conversion_modifier": 1.15
+  },
+  {
+    "asin": "SWASH_003",
+    "product_name": "Smartwash Sensitive Detergent",
+    "base_price": 19.99,
+    "conversion_modifier": 0.45
+  }
+]

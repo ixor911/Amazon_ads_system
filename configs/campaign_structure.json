@@ -1,0 +1,47 @@
+{
+  "CAMP_A": {
+    "SWASH_001": [
+      "laundry detergent",
+      "washing liquid",
+      "cheap detergent",
+      "fresh laundry scent"
+    ],
+    "SWASH_002": [
+      "laundry detergent",
+      "washing liquid",
+      "fresh laundry scent"
+    ],
+    "SWASH_003": [
+      "laundry detergent",
+      "cheap detergent",
+      "fresh laundry scent"
+    ]
+  },
+  "CAMP_B": {
+    "SWASH_001": [
+      "smartwash detergent",
+      "detergent pods",
+      "laundry detergent"
+    ],
+    "SWASH_002": [
+      "smartwash detergent",
+      "detergent pods",
+      "eco laundry detergent"
+    ]
+  },
+  "CAMP_C": {
+    "SWASH_001": [
+      "detergent pods",
+      "washing liquid"
+    ],
+    "SWASH_002": [
+      "detergent pods",
+      "eco laundry detergent"
+    ],
+    "SWASH_003": [
+      "detergent pods",
+      "washing liquid",
+      "smartwash detergent"
+    ]
+  }
+}

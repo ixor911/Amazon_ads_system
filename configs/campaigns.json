@@ -1,0 +1,36 @@
+[
+    {
+        "campaign_id": "CAMP_A",
+        "campaign_name": "Smartwash Launch - Broad Discovery",
+        "market": "DE",
+        "daily_budget": 500.0,
+
+        "base_impressions": [6000, 18000],
+        "base_ctr": [0.0025, 0.0060],
+        "base_cvr": [0.03, 0.08],
+        "base_cpc": [0.70, 1.40]
+    },
+    {
+        "campaign_id": "CAMP_B",
+        "campaign_name": "Smartwash Launch - High Intent",
+        "market": "DE",
+        "daily_budget": 180.0,
+
+
+        "base_impressions": [1500, 6000],
+        "base_ctr": [0.0060, 0.0120],
+        "base_cvr": [0.10, 0.20],
+        "base_cpc": [0.45, 0.90]
+    },
+    {
+        "campaign_id": "CAMP_C",
+        "campaign_name": "Smartwash Launch - Product Test",
+        "market": "DE",
+        "daily_budget": 300.0,
+
+        "base_impressions": [3000, 10000],
+        "base_ctr": [0.0040, 0.0100],
+        "base_cvr": [0.04, 0.12],
+        "base_cpc": [0.50, 1.20]
+    }
+]
